@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+
+    
+     <? for (post of data.posts) { ?>
+        <p> <?= post.user_id ?> (<?= new Date(post.create_at).toLocaleString("ru", {}) ?>):<br/>  <?= post.message ?></p>
+      <? } ?>
+
+   <form id="sendmessage">
+       <p id="sendmessage__alert" class="sendmessage__alert sendmessage__alert--hidden">Сообщение отправлено</p>
+      <input type="hidden" id="sendmessage__receiver_id" value="<?= data.messenger_id ?>" >
+      <p><textarea id="sendmessage__input" class="sendmessage__input"> </textarea></p>
+      <p><button id="sendmessage__button" type="button" onclick="handleSendmessage()">Отправить</button></p>
+    </form>   
+    
+  </body>
+
+  <script>
+      
+            
+      function handleSendmessage() {
+
+          messageTextarea = document.querySelector("#sendmessage__input")
+          messageText = messageTextarea.value
+          messageTextarea.value = ""
+
+          receiverID = document.querySelector("#sendmessage__receiver_id").value
+
+          console.log(`Отправляем ${messageTextarea} для ${receiverID}`)
+          result = google.script.run.sendMessage(receiverID, messageText)
+
+          // Показываем алерт
+          document.querySelector("#sendmessage__alert").classList.remove("sendmessage__alert--hidden")
+          
+      }
+      
+
+  </script> 
+
+  <style>
+   
+    .sendmessage__input { width: 100%;}
+    .sendmessage__alert--hidden { display: none; }
+    .sendmessage__alert {
+      background-color: #ddd;
+      border-radius: 6px;
+      padding: 12px 16px;
+    }
+
+  </style>  
+</html>
