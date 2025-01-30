@@ -41,7 +41,6 @@ static sendMessage(receiverID, message, senderId=SLAVA_ID, token=SLAVA_TOKEN) {
 
   var response = UrlFetchApp.fetch(BASEURL + '/posts', options);
 
-
   // addRow("logs", {messenger_id: receiverID, message: message, created_at: new Date(), result: response})
 
   return response

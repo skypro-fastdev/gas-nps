@@ -7,10 +7,10 @@ function buildJSONresponse(obj){
 }
 
 
-сfunction doPost(e) {
+function doPost(e) {
 
   if (DEBUG) { Logger.log("Начало добавления оценки по API") }
-  if (DEBUGTG) {sendReportToTelegram("Начало добавления оценки по API:\n\n" + e.postData.contents+"\n") }
+  if (DEBUGTG) {TGLoger.push("Начало добавления оценки по API:\n\n" + e.postData.contents+"\n") }
 
   const incomingData = JSON.parse(e.postData.contents);
   const processingResult = processNPS(incomingData)
@@ -38,7 +38,7 @@ function processNPS(npsFormData){
     if (record){  // Если все данные уже есть
 
         if(DEBUG) {Logger.log(`Старая оценка, обновляем данные`)}
-        sendReportToTelegram(`Обновляем строку для ${studentID}`)
+        TGLoger.push(`Обновляем строку для ${studentID}`)
         npsFormData.nps_created_at = new Date();
         record.updateAll(npsFormData)
     }
@@ -46,11 +46,11 @@ function processNPS(npsFormData){
     else {          // Если пришли новые данные 
 
         if(DEBUG) {Logger.log(`Новая оценка, содаем новый ряд`)}
-        sendReportToTelegram(`Добавляем строку для ${studentID}`)  
+        TGLoger.push(`Добавляем строку для ${studentID}`)  
 
         // Обогащаем данные персонализацией 
         if(DEBUG) {Logger.log(`Запрашиваем перснализацию для ${studentID}`)}  
-        const personalisationData = getStudentPersonalisationInfo(studentID)
+        const personalisationData = PlatformClient.loadInfo(studentID)
         if(DEBUG) {Logger.log(`Получена персонализация ${JSON.stringify(personalisationData)}`)}
         const unitedData = {...npsFormData, ...personalisationData}
         if(DEBUG) {Logger.log(`Объединенные данные в объекте: ${JSON.stringify(unitedData)}`)}

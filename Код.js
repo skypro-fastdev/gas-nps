@@ -1,6 +1,6 @@
 function onOpen() { /* Добавление пунктов в выпадающее меню и обработка их запуска */
 
-3  const ui = SpreadsheetApp.getUi(); // Интерфейс пользователя Google Sheets
+  const ui = SpreadsheetApp.getUi(); // Интерфейс пользователя Google Sheets
 
   ui.createMenu('⚡ Обработать NPS')
 
@@ -33,14 +33,13 @@ function onOpen() { /* Добавление пунктов в выпадающе
 }
 
 
-
     /**
      * @description Обработчик отправки выбранного сообщения из бота.
      * Получает выбранную запись из таблицы текущего месяца, отправляет сообщение пользователю
      * и обновляет статус записи, если необходимо.
      */
 
-    function sendSelectedFromBot(){ // 
+    function sendSelectedFromBot(){ 
 
         const sheet = new Sheet(CURRENTMONTH); // Получаем объект листа текущего месяца.
         const record = sheet.getSelected()[0]; // Получаем первую выбранную запись.  Предполагается, что выбрана только одна запись.
@@ -48,14 +47,15 @@ function onOpen() { /* Добавление пунктов в выпадающе
         const receiverID = record.messenger_id; // ID получателя сообщения.
         const messageText = record.message; // Текст сообщения для отправки.
         const status = record.status; // Текущий статус записи.
-        const shouldSaveStatus = StatusManager.all[status]; // Проверяем, нужно ли сохранять статус.
 
-        sendMessage(receiverID, messageText, senderId=SLAVA_ID, token=SLAVA_TOKEN); // Отправляем сообщение пользователю.
+        MattermostClient.sendMessage(receiverID, messageText, senderId=SLAVA_ID, token=SLAVA_TOKEN); // Отправляем сообщение пользователю.
 
-        if (shouldSaveStatus){
-          record.update("restatus", status); // Обновляем статус записи на текущий.
-        }
+        // Проверяем, нужно ли сохранять статус.
+        const allStatuses = new Sheet("__statuses")
+        const shouldSaveStatus = allStatuses.get(status).save === "TRUE"
 
+        if (shouldSaveStatus){ record.update("restatus", status); } // Обновляем статус записи на текущий.
+        
         record.update("latest_by", "bot"); // Указываем, что последнее изменение было сделано ботом.
       
     }
@@ -153,7 +153,7 @@ function onOpen() { /* Добавление пунктов в выпадающе
         for (record of all_records) {
 
           const studentId = record.student_id
-          const studentInfo = getStudentPersonalisationInfo(studentId)
+          const studentInfo = PlatformClient.loadInfo(studentId)
 
           if (studentInfo === null) {
             // Если не удалось загрузить из персонализацию информацию
