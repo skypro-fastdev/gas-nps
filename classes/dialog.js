@@ -6,7 +6,6 @@
 
 class Dialog {
 
-
   constructor(messages){
     this.messages = messages
     this.senderID = SLAVA_ID

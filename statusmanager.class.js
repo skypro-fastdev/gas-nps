@@ -20,9 +20,3 @@ class StatusManager {
 
 }
 
-
-function test_StatusManager(){
-
-    Logger.log(StatusManager.all)
-
-}

@@ -65,7 +65,7 @@ class Sheet {
 
   _allData(){
     const fullRange = this.sheetObject.getDataRange();
-    return fullRange.getValues().slice(1); // Отезаем заголовок
+    return fullRange.getValues().slice(1); // Отрезаем заголовок
   }
 
   _zipRow(rowData, rowNumber) {
@@ -96,7 +96,7 @@ class Sheet {
     const allRows = fullRange.getValues().slice(1);
     const columnIndex = this.headers.indexOf(this.indexKey)
     for (const [rowNumber, rowData] of Object.entries(allRows)){
-      if (rowData[columnIndex] === value.trim()){ return this._zipRow(rowData, rowNumber+2)}
+      if (rowData[columnIndex]+"" === value+"".trim()){ return this._zipRow(rowData, rowNumber+2)}
     }
   }
 
@@ -129,4 +129,11 @@ class Sheet {
 function testGetSelected(){
   s = new Sheet('01_25').getSelected()
   Logger.log(s)
+}
+
+function testAll(){
+
+  a = new Sheet('01_25').all()
+  Logger.log(a.length)
+  
 }

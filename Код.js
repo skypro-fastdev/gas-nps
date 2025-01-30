@@ -1,6 +1,6 @@
 function onOpen() { /* Добавление пунктов в выпадающее меню и обработка их запуска */
 
-  var ui = SpreadsheetApp.getUi(); // Интерфейс пользователя Google Sheets
+3  const ui = SpreadsheetApp.getUi(); // Интерфейс пользователя Google Sheets
 
   ui.createMenu('⚡ Обработать NPS')
 
@@ -8,24 +8,24 @@ function onOpen() { /* Добавление пунктов в выпадающе
 
      .addSeparator()
 
-    .addItem('👻 Загрузить данные пользователей', 'handleGetSelectedPersonalization') 
-    .addItem('🔄 Диалоги: Загрузить из ММ и обновить',        'Service.updateCommunication') 
-    .addItem('✉️ Диалоги: Запустить автотправку ответов',     'Service.sendAllScheduled')  
-    .addItem('✉️ Починить пустые статусы',                  'Service.changeAllStatuses')  
+    .addItem('👻 Загрузить данные пользователей',             'loadStudentInfo') 
+    .addItem('🔄 Диалоги: Загрузить из ММ и обновить',        'updateCommunication') 
+    .addItem('✉️ Диалоги: Запустить автотправку ответов [ 🕑 ]',     'sendAllScheduled')  
+    .addItem('✉️ Проставить пустые статусы [ 🕑 ]',                    'setAllStatuses')  
       
-    .addSeparator()
+    .addSeparator()   
     
     .addSubMenu(
       ui.createMenu('Сформирвать ответ')
-        .addItem('С помощью ИИ', 'Service.improveAnswer') 
-        .addItem('Взять из Solution', 'Service.copyAnswer')               
+        .addItem('С помощью ИИ', 'improveAnswer') 
+        .addItem('Взять из Solution', 'copyAnswer')               
     )    
 
-    .addItem('💬 Показать диалог с пользователем', 'Service.showDialog') 
+    .addItem('💬 Показать диалог с пользователем', 'showDialog') 
 
     .addSubMenu(
       ui.createMenu('➡️ Диалог: Отправить')
-        .addItem('✉️ Сообщение от имени Славабота', 'Service.sendSelectedFromBot')        
+        .addItem('✉️ Сообщение от имени Славабота', 'sendSelectedFromBot')        
     )
 
     .addToUi();
@@ -33,15 +33,14 @@ function onOpen() { /* Добавление пунктов в выпадающе
 }
 
 
-class Service {
-
 
     /**
      * @description Обработчик отправки выбранного сообщения из бота.
      * Получает выбранную запись из таблицы текущего месяца, отправляет сообщение пользователю
      * и обновляет статус записи, если необходимо.
      */
-    static sendSelectedFromBot(){ // 
+
+    function sendSelectedFromBot(){ // 
 
         const sheet = new Sheet(CURRENTMONTH); // Получаем объект листа текущего месяца.
         const record = sheet.getSelected()[0]; // Получаем первую выбранную запись.  Предполагается, что выбрана только одна запись.
@@ -66,7 +65,7 @@ class Service {
     * Получает ID пользователя Mattermost из выбранной записи в таблице,
     * загружает историю переписки и отображает ее в диалоговом окне.
     */
-    static showDialog(){
+    function showDialog(){
 
       // Показывает во всплывашке историю переписки с пользователем
 
@@ -80,7 +79,7 @@ class Service {
       studentFullName = record.student_name
 
       // Загружаем информацию из диалога с пользователем   
-      allPosts = fetchAllPostsWith(messengerID, senderID=SLAVA_ID, accessToken=SLAVA_TOKEN)
+      allPosts = MattermostClient.fetchAllPostsWith(messengerID, senderID=SLAVA_ID, accessToken=SLAVA_TOKEN)
 
       allPostList = Object.values(allPosts)
       allPostList.sort((a,b) => a.update_at - b.update_at)
@@ -95,13 +94,17 @@ class Service {
     * Получает выбранную запись из таблицы текущего месяца, формирует запрос для OpenAI,
     * отправляет запрос и обновляет поле "message" в записи улучшенным ответом.
     */
-    static improveAnswer(){
+    function improveAnswer(){
       
         const sheet = new Sheet(); // Получаем объект листа текущего месяца.
         const record = sheet.getSelected()[0]; // Получаем первую выбранную запись. 
 
         const userPrompt = `Студент - ${record.student_name}, Первичная коммуникация- ${record.is_primary}, Предыдущий ответ - ${record.comment}, Решение - ${record.solution}' `
-        const response = getOpenAIResponse(userPrompt, systemPrompt);
+
+
+        const response = OpenAI.getResponse(userPrompt, systemPrompt);
+
+
       record.update("message", response)
 
     }
@@ -111,7 +114,7 @@ class Service {
     * Получает выбранную запись из таблицы текущего месяца и обновляет поле "message" 
     * значением из поля "solution".
     */
-    static copyAnswer(){
+    function copyAnswer(){
 
       const sheet = new Sheet(); // Получаем объект листа текущего месяца.
       const record = sheet.getSelected()[0]; // Получаем первую выбранную запись. 
@@ -120,7 +123,7 @@ class Service {
       
     }
 
-    static updateCommunication(){
+    function updateCommunication(){
 
       const sheet = new Sheet(); // Получаем объект листа текущего месяца.
       const allRecords = sheet.getSelected(); // Получаем первую выбранную запись. 
@@ -140,7 +143,7 @@ class Service {
     }
 
 
-    static loadStudentInfo(){
+    function loadStudentInfo(){
 
         const sheet = new Sheet(); // Получаем объект листа текущего месяца.
         const all_records = sheet.getSelected(); // Получаем первую выбранную запись. 
@@ -163,17 +166,71 @@ class Service {
         }
     }
 
-    static changeAllStatuses(){
-      Autoresponse.massChangeStatus()
+    function getTemplate(templateName){
+
+      // Получает шаблон со страницы templates по его названию
+
+      if (DEBUG) {Logger.log(`Загружаем шаблон: ${templateName}`)}
+
+      const theTemplate = new Sheet(sheetName="templates", indexKey="key").get(templateName) 
+      return theTemplate.value
+      
     }
 
-    static sendAllScheduled(){
-      Autoresponse.sendAllScheduled()
+    function setAllStatuses(){
+
+      const positiveTemplate = getTemplate("auto_positive")
+      const negativeTemplate = getTemplate("auto_negative") 
+
+      const allRecords = new Sheet(CURRENTMONTH).all() 
+
+      for (const record of allRecords) {
+
+          if (!record.student_id ) {continue}
+          if (record.status != "") {continue}
+
+          if (record.comment.length > 2) { record.update("status", "Требуется ручной ответ"); continue}
+
+          if (record.mark >=7 ) { 
+            record.update("status", "autoresponse_positive"); 
+            record.update("message", positiveTemplate); 
+            continue 
+          } 
+
+          record.update("status", "autoresponse_negative")
+          record.update("message", negativeTemplate)
+
+      }
+     
     }
 
-}
 
+    function sendAllScheduled(maxMessages=20){
+    
+      const allRecords = new Sheet(CURRENTMONTH).all() 
 
+      let sentCounter = 0
+
+      Logger.log(`Вытащено рядов ${allRecords.length}`)
+
+      for (const record of allRecords) {
+
+        // Logger.log(`Отправляем ученика ${record.student_id}`)
+
+        if (!record.messenger_id) {  record.update("status", "Ошибка"); continue;}
+
+        if (record.status == "autoresponse_positive" || record.status == "autoresponse_negative"){
+            Logger.log(`Отправляем ученику настоящее сообщение ${record.student_id}`)  
+            MattermostClient.sendMessage(record.messenger_id, record.message)
+            record.update("status", "autoresponse_sent")
+            sentCounter += 1
+
+            if  (sentCounter > maxMessages) {break}
+
+        }
+    }
+
+  }
 
 
 function checkIntegrity(){
@@ -192,7 +249,6 @@ function checkIntegrity(){
     }
 
   }
-
 
 
   SpreadsheetApp.getUi().alert(`Все  нужне поля заданы!`)
