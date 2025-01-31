@@ -1,5 +1,22 @@
+/**
+ * @class MattermostClient
+ * @description Клиент для взаимодействия с Mattermost API.
+ */
+
 class MattermostClient {
-  
+
+
+ /**
+   * @static
+   * @function createDirectChannel
+   * @description Утилитарный метод. Создает абстракцию – канал между двумя пользователями. Без него нельзя ничего отправить или прочитать.
+   * @param {string} senderId - ID отправителя.
+   * @param {string} receiverId - ID получателя.
+   * @param {string} token - Токен авторизации.
+   * @returns {string} - ID созданного канала.
+   * @example
+   * const channelId = MattermostClient.createDirectChannel("user1", "user2", "your_token");
+   */  
   static createDirectChannel(senderId,  receiverId, token) {
 
     const directChannelData = [senderId, receiverId];

@@ -1,3 +1,8 @@
+/**
+ * @class TGLoger
+ * @description Утилитарный класс для отправки сообщений в канал SKY NPS Logs в Telegram с использованием Telegram Bot API.
+ */
+
 class TGLoger {
 
   static push(message) {

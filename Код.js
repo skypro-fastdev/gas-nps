@@ -51,7 +51,7 @@ function onOpen() { /* Добавление пунктов в выпадающе
         MattermostClient.sendMessage(receiverID, messageText, senderId=SLAVA_ID, token=SLAVA_TOKEN); // Отправляем сообщение пользователю.
 
         // Проверяем, нужно ли сохранять статус.
-        const allStatuses = new Sheet("__statuses")
+        const allStatuses = new Sheet("__statuses", "status")
         const shouldSaveStatus = allStatuses.get(status).save === "TRUE"
 
         if (shouldSaveStatus){ record.update("restatus", status); } // Обновляем статус записи на текущий.
@@ -100,7 +100,6 @@ function onOpen() { /* Добавление пунктов в выпадающе
         const record = sheet.getSelected()[0]; // Получаем первую выбранную запись. 
 
         const userPrompt = `Студент - ${record.student_name}, Первичная коммуникация- ${record.is_primary}, Предыдущий ответ - ${record.comment}, Решение - ${record.solution}' `
-
 
         const response = OpenAI.getResponse(userPrompt, systemPrompt);
 
@@ -183,11 +182,20 @@ function onOpen() { /* Добавление пунктов в выпадающе
       const negativeTemplate = getTemplate("auto_negative") 
 
       const allRecords = new Sheet(CURRENTMONTH).all() 
+      const allIgnored = new Sheet("__blacklist").all().map(record => record.student_id)
+
+      Logger.log(`Игнорируем ${allIgnored}`)
 
       for (const record of allRecords) {
 
           if (!record.student_id ) {continue}
           if (record.status != "") {continue}
+
+          // Если в черном списке – всегда игнорим
+
+          Logger.log(`Проверяем ${record.student_id}`)
+
+          if (allIgnored.includes(record.student_id)) { record.update("status", "Игнорируем"); continue }
 
           if (record.comment.length > 2) { record.update("status", "Требуется ручной ответ"); continue}
 

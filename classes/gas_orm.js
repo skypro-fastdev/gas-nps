@@ -1,21 +1,31 @@
+// GAS ORM by @kushedow https://github.com/kushedow/gas-orm/tree/main
+
 class Record {
 
   constructor(data, rowNumber, sheetName) {
-    this.data = data;  
-    this.rowNumber = rowNumber   
-    this.sheetName = sheetName 
-    for (const key of Object.keys(this.data)){
-        if(["data", "rowNumber", "sheetName"].includes(key)) {throw Error("Unsupported name")}
-        Object.defineProperty(this, key, {  get() { return this.data[key]} });
+    this.data = data;
+    this.rowNumber = rowNumber;
+    this.sheetName = sheetName;
+    for (const key of Object.keys(this.data)) {
+      if (["data", "rowNumber", "sheetName"].includes(key)) {
+        throw Error("Unsupported name");
+      }
+      Object.defineProperty(this, key, {
+        get() {
+          return this.data[key];
+        }
+      });
     }
   }
 
-  get(key){  return this.data[key] }// for backward compatibility
+  get(key) { return this.data[key]; }
 
-  update(key, newValue){
-    if (!this.data.hasOwnProperty(key)){throw Error(`Key ${key} not found in ${this.sheetName}`)}
-    this.data[key] = newValue
-    new Sheet(this.sheetName).updateCellByRow(this.rowNumber, key, newValue)
+  update(key, newValue) {
+    if (!this.data.hasOwnProperty(key)) {
+      throw Error(`Key ${key} not found in ${this.sheetName}`);
+    }
+    this.data[key] = newValue;
+    new Sheet(this.sheetName).updateCellByRow(this.rowNumber, key, newValue);
   }
 
   updateAll(newData) {
@@ -44,7 +54,9 @@ class RecordSet {
         return this;
     }
 
+  all() {return this.records}
   get result () {return this.records}
+  
 }
 
 class Sheet {
@@ -122,18 +134,4 @@ class Sheet {
       this._zipRow(rowArray, firstRow + index)
     );
   }
-
-}
-
-
-function testGetSelected(){
-  s = new Sheet('01_25').getSelected()
-  Logger.log(s)
-}
-
-function testAll(){
-
-  a = new Sheet('01_25').all()
-  Logger.log(a.length)
-  
 }
